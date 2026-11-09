@@ -1,0 +1,220 @@
+{
+  "assignment": "reduce-codex-agent-token-use:2.33.1",
+  "baseRevision": "cb364b4dd271d012946f682529a3265cd1489218",
+  "codeCommit": "9e571042ba44059e8d6d9b7120d7d28140d7d49f",
+  "testsModified": false,
+  "audit": "Доручення чинне: незмінена регресія відтворила writers=1; суперечностей із пакетною поведінкою 2.33 не знайдено. Відкриті 3.1 і 9.1 поза дорученням; архівація не застосовується.",
+  "runs": [
+    {
+      "evidence": "red.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+      "workspaceBase": "cb364b4dd271d012946f682529a3265cd1489218",
+      "workspaceChanges": [],
+      "cliExitCode": 1,
+      "runId": "edce9ab9-1cf8-4ea3-b3d9-288a9e4d75cc",
+      "selection": {
+        "files": [
+          "test/cli-live-latency.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/cli-live-latency.test.ts",
+          "name": "settlement reads previously delivered context reviews and uncertain health summaries without no-op writes"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "passedCount": 8
+    },
+    {
+      "evidence": "hotfix-readonly-failure.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+      "workspaceBase": "cb364b4dd271d012946f682529a3265cd1489218",
+      "workspaceChanges": [
+        "startup-context-delivery.ts: read planning; before removing schema writes"
+      ],
+      "cliExitCode": 1,
+      "runId": "73fb2795-3919-4f90-b56b-16a70fa598c9",
+      "selection": {
+        "files": [
+          "test/cli-live-latency.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/cli-live-latency.test.ts",
+          "name": "settlement reads previously delivered context reviews and uncertain health summaries without no-op writes"
+        },
+        {
+          "file": "test/cli-live-latency.test.ts",
+          "name": "agent ps shares one process and pane snapshot across active agents at live cardinalities"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "fix-implementation",
+      "passedCount": 7
+    },
+    {
+      "evidence": "hotfix-latency-intermediate.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+      "workspaceBase": "cb364b4dd271d012946f682529a3265cd1489218",
+      "workspaceChanges": [
+        "startup-context-delivery.ts: early return for no due",
+        "startup-context.ts: read schema existence"
+      ],
+      "cliExitCode": 0,
+      "runId": "da687c6b-1120-49c0-ab41-55bbc94ef8b3",
+      "selection": {
+        "files": [
+          "test/cli-live-latency.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passedCount": 9
+    },
+    {
+      "evidence": "hotfix-batch-failure.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group reduce-codex-agent-token-use/context-review-batch",
+      "workspaceBase": "cb364b4dd271d012946f682529a3265cd1489218",
+      "workspaceChanges": [
+        "same intermediate code; active-review waiting event exposed"
+      ],
+      "cliExitCode": 1,
+      "runId": "9b8a716c-afe4-4475-995d-97e98fe9ac60",
+      "selection": {
+        "files": [
+          "test/startup-context-review.test.ts",
+          "test/startup-context-lifecycle.test.ts",
+          "test/service-host.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/service-host.test.ts",
+          "name": "context review backlog delivers one event containing every open package runId"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "passedCount": 35
+    },
+    {
+      "evidence": "hotfix-batch.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group reduce-codex-agent-token-use/context-review-batch",
+      "workspaceBase": "cb364b4dd271d012946f682529a3265cd1489218",
+      "workspaceChanges": [
+        "final implementation.patch"
+      ],
+      "cliExitCode": 0,
+      "runId": "6e81c7ea-e444-4e8a-9209-68079d9b432e",
+      "selection": {
+        "files": [
+          "test/startup-context-review.test.ts",
+          "test/startup-context-lifecycle.test.ts",
+          "test/service-host.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passedCount": 36
+    },
+    {
+      "evidence": "hotfix-latency.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+      "workspaceBase": "cb364b4dd271d012946f682529a3265cd1489218",
+      "workspaceChanges": [
+        "final implementation.patch"
+      ],
+      "cliExitCode": 0,
+      "runId": "2f8de00b-287a-4aab-8131-6dd11cc29eba",
+      "selection": {
+        "files": [
+          "test/cli-live-latency.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passedCount": 9
+    }
+  ],
+  "readability": {
+    "scope": [
+      "src/startup-context-delivery.ts: planContextReviewOutbox, deliverStartupContextEvents",
+      "src/startup-context.ts: pendingStartupContextReviewEvent"
+    ],
+    "base": "cb364b4dd271d012946f682529a3265cd1489218",
+    "reviewed": "9e571042ba44059e8d6d9b7120d7d28140d7d49f",
+    "finding": "Планувальник явно повертає поточну чергу, зайві недоставлені intent і змінений/новий intent, сам не записує. Основна функція читає план; тільки за фактичної зміни відкриває writer, повторно планує в ньому, видаляє зайве й записує replacement. Доставлені intent не видаляються; незмінний payload не переписується. Читання due перевіряє наявність таблиці без schema DDL. Шлях claim/receipt доставки збережено. Без прихованих записів у read-шляху; альтернативи відсутньої таблиці, активного review і нового backlog явно перевірено фінальними групами.",
+    "validation": "Незмінені assertion writers=0; 9/9 latency та 36/36 batching. Окремі утиліти якості дорученням не призначені."
+  },
+  "delivery": {
+    "documentation": "documentation-commit.json",
+    "receipt": "main-receipt.json"
+  },
+  "stderr": "Each run has separate stderr.txt and cli.json. Initial tool stdout truncated, complete TestRunResult retained. Other tool results retained fully before extracting stderr. CLI codes kept separate from child exitCode."
+}

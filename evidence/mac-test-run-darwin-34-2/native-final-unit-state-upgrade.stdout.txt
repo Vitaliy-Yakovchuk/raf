@@ -1,0 +1,36 @@
+Warning: conf/test-runs.json#/projects/etchly/groups/fix-etchly-test-account-delete-d1-calls~1worker-sessions/files: group file must belong to profile inventory: worker/src/test-accounts-agent-tests/delete-sessions-d1-calls.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/etchly-switch-to-claude-sonnet-5-5~1qa-sonnet-generation/files: group file must belong to profile inventory: worker/src/sonnet-5-5-agent-tests/provider-refusal-diagnostic.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/etchly-switch-to-claude-sonnet-5-5~1qa-test-account-haiku/files: group file must belong to profile inventory: worker/src/admin-model-choice-agent-tests/test-account-haiku.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/route-registration-to-regional-shards~1guest-hydration-3-7/files: group file must belong to profile inventory: app/src/shell/guest-snapshot.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/route-registration-to-regional-shards~1smoke-tools-3-7/files: group file must belong to profile inventory: app/tools/live-stack/local-mode-cases.test.ts; entry skipped
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (323.397584ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 477.287833
+
+✖ failing tests:
+
+test at test/test-run-unit-state-upgrade.test.ts:16:1
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (323.397584ms)
+  AssertionError [ERR_ASSERTION]: RAF test run result: /private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-z420-TSNqnt/control-home/.raf/tmp/unit-caller/test-run-3abbb4ad-701c-42fd-a35c-66f525eb0794.json
+  Sandbox raf command refused (CALLER_UNAUTHORIZED): QA channel unavailable: unit context could not be verified (STATE_MIGRATION_CONFLICT: STATE_MIGRATION_CONFLICT: Cannot migrate: unknown client; stop all raf clients, workers and service and retry); restore the trusted caller channel; raf was not retried
+  {"testKind":null,"timeoutPolicy":null,"callerPhase":null,"diagnostics":[{"kind":"preflight","test":null,"errorName":"Error","errorCode":"CALLER_UNAUTHORIZED","message":"Sandbox raf command refused (CALLER_UNAUTHORIZED): QA channel unavailable: unit context could not be verified (STATE_MIGRATION_CONFLICT: STATE_MIGRATION_CONFLICT: Cannot migrate: unknown client; stop all raf clients, workers and service and retry); restore the trusted caller channel; raf was not retried","location":{"file":"<external>/test-run-runtime.ts","line":488,"column":44},"stack":["    at Module.runConfiguredTestRun (<external>/test-run-runtime.ts:488:44)","    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)","    at async TestContext.<anonymous> (<external>/test-run-unit-state-upgrade.test.ts:107:18)","    at async Test.run (node:internal/test_runner/test:1409:7)","    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"],"redacted":true,"truncated":false}],"diagnosticSummary":{"totalEntries":1,"retainedEntries":1,"omittedEntries":0,"truncated":false,"redacted":true},"environmentSummary":{"executable":"/opt/homebrew/Cellar/node/26.12.1/bin/node","runtimeVersion":"v26.12.1","adapter":"unavailable","isolation":"unavailable","configurationFingerprints":{"flow":"","testRuns":"","projects":""},"tmpPathBytes":0,"privateRunTmp":false},"runId":"a05ab465-a305-48c1-aa6b-13c011596f05","project":"raf","workspace":"","phase":"hotfix","group":"complete-raf-flow-contracts/z420","profileId":null,"selection":{"files":[],"testIds":[]},"command":null,"startedAt":"2026-11-05T09:36:06.298Z","durationMs":0,"exitCode":null,"signal":null,"timedOut":false,"cleanup":{"complete":true,"remainingPids":[]},"outcome":"refused","failureKinds":["refusal"],"passed":[],"knownRed":[],"unexecuted":[],"unknown":[],"removed":[],"stateAccess":null,"groupSnapshot":"unavailable","groupState":null,"timeoutCount":null,"nextAction":"fix-setup","hintIds":["refusal"],"hints":["Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."],"evidence":[],"errorCode":"CALLER_UNAUTHORIZED"}
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-unit-state-upgrade.test.ts:109:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
